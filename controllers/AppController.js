@@ -7,7 +7,7 @@ export const getStatus = (req, res) => {
 
   res.statusCode = 200;
   res.json({ redis: redisStatus, db: dbStatus });
-}
+};
 
 export const getStats = async (req, res) => {
   const users = await dbClient.nbUsers();
@@ -15,4 +15,4 @@ export const getStats = async (req, res) => {
 
   res.statusCode = 200;
   res.json({ users, files });
-}
+};
