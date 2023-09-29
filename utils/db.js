@@ -32,6 +32,16 @@ class DBClient {
     const fileCount = await this.db.collection('files').countDocuments();
     return fileCount;
   }
+
+  async getUserByEmail(email) {
+    const user = await this.db.collection('users').findOne({ email });
+    return user;
+  }
+
+  async createUser({ email, password }) {
+    const newUser = await this.db.collection('users').insertOne({ email, password });
+    return newUser.ops[0];
+  }
 }
 
 const dbClient = new DBClient();
