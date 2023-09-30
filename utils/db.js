@@ -45,20 +45,19 @@ class DBClient {
     const skip = page * pageSize;
     let files = [];
 
-    console.log(parentId);
     if (parentId === 0) {
       files = await collection.find({}).toArray();
     } else {
       const aggregationPipeline = [
-        { $match: { parentId: parentId } },
+        { $match: { parentId } },
         { $skip: skip },
-        { $limit: pageSize }
+        { $limit: pageSize },
       ];
 
       files = await collection.aggregate(aggregationPipeline).toArray();
     }
 
-    return files
+    return files;
   }
 
   async getUserByEmail(email) {
@@ -69,6 +68,12 @@ class DBClient {
   async getUserById(userId) {
     const user = await this.db.collection('users').findOne({ _id: new ObjectId(userId) });
     return user;
+  }
+
+  async updateFile(fileId, fileStatus) {
+    await this.db.collection('files').updateOne({ _id: new ObjectId(fileId) }, { $set: { isPublic: fileStatus } });
+    const file = await this.getFileById(fileId);
+    return file;
   }
 
   async nbFiles() {
