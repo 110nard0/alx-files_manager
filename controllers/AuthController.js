@@ -23,7 +23,7 @@ export const getConnect = async (req, res) => {
   const token = uuid4();
   const key = `auth_${token}`;
 
-  await redisClient.set(key, user._id, 24 * 3600);
+  await redisClient.set(key, user._id.toString(), 24 * 3600);
   res.status(200).json({ token });
 };
 

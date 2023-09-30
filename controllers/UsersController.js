@@ -38,7 +38,6 @@ export const getMe = async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  console.log(userId);
   const user = await dbClient.getUserById(userId);
 
   if (!user) {
