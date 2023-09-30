@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 
 class DBClient {
   constructor() {
@@ -23,14 +23,9 @@ class DBClient {
     return this.client.isConnected();
   }
 
-  async nbUsers() {
-    const userCount = await this.db.collection('users').countDocuments();
-    return userCount;
-  }
-
-  async nbFiles() {
-    const fileCount = await this.db.collection('files').countDocuments();
-    return fileCount;
+  async createUser({ email, password }) {
+    const newUser = await this.db.collection('users').insertOne({ email, password });
+    return newUser.ops[0];
   }
 
   async getUserByEmail(email) {
@@ -38,9 +33,19 @@ class DBClient {
     return user;
   }
 
-  async createUser({ email, password }) {
-    const newUser = await this.db.collection('users').insertOne({ email, password });
-    return newUser.ops[0];
+  async getUserById(id) {
+    const user = await this.db.collection('users').findOne({ _id: new ObjectId(id) });
+    return user;
+  }
+
+  async nbFiles() {
+    const fileCount = await this.db.collection('files').countDocuments();
+    return fileCount;
+  }
+
+  async nbUsers() {
+    const userCount = await this.db.collection('users').countDocuments();
+    return userCount;
   }
 }
 
