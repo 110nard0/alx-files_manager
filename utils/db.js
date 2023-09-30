@@ -39,6 +39,28 @@ class DBClient {
     return file;
   }
 
+  async getFiles(parentId = 0, page = 0) {
+    const collection = this.db.collection('files');
+    const pageSize = 20;
+    const skip = page * pageSize;
+    let files = [];
+
+    console.log(parentId);
+    if (parentId === 0) {
+      files = await collection.find({}).toArray();
+    } else {
+      const aggregationPipeline = [
+        { $match: { parentId: parentId } },
+        { $skip: skip },
+        { $limit: pageSize }
+      ];
+
+      files = await collection.aggregate(aggregationPipeline).toArray();
+    }
+
+    return files
+  }
+
   async getUserByEmail(email) {
     const user = await this.db.collection('users').findOne({ email });
     return user;
