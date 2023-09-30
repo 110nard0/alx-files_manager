@@ -23,9 +23,20 @@ class DBClient {
     return this.client.isConnected();
   }
 
+  async createFile(file) {
+    const { insertedId } = await this.db.collection('files').insertOne(file);
+    const newFile = await this.getFileById(insertedId);
+    return newFile;
+  }
+
   async createUser({ email, password }) {
     const newUser = await this.db.collection('users').insertOne({ email, password });
     return newUser.ops[0];
+  }
+
+  async getFileById(fileId) {
+    const file = await this.db.collection('files').findOne({ _id: new ObjectId(fileId) });
+    return file;
   }
 
   async getUserByEmail(email) {
@@ -33,8 +44,8 @@ class DBClient {
     return user;
   }
 
-  async getUserById(id) {
-    const user = await this.db.collection('users').findOne({ _id: new ObjectId(id) });
+  async getUserById(userId) {
+    const user = await this.db.collection('users').findOne({ _id: new ObjectId(userId) });
     return user;
   }
 
