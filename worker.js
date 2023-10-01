@@ -1,13 +1,13 @@
 import fs from 'fs';
+import kue from 'kue';
 import imageThumbnail from 'image-thumbnail';
-import { Queue, QueueEvents, Worker } from 'bullmq';
 
 import dbClient from './utils/db';
 
-const fileQueue = new Queue('fileQueue');
-export default fileQueue;
+const queue = kue.createQueue();
+export default queue;
 
-const worker = new Worker('fileQueue', async (job) => {
+queue.process('fileQueue', async (job, done) => {
   const { fileId, userId } = job.data;
 
   if (!fileId) {
@@ -45,18 +45,35 @@ const worker = new Worker('fileQueue', async (job) => {
         });
     }));
   }
+  done();
 });
 
-// Create a QueueScheduler to manage job scheduling
-const queueEvents = new QueueEvents('fileQueue');
+queue.process('userQueue', async (job, done) => {
+  const { userId } = job.data;
 
-queueEvents.on('completed', ({ jobId }) => {
-  console.log(`done generating thumbnails for job #${jobId}`);
-});
+  if (!userId) {
+    throw new Error('Missing userId');
+  }
 
-queueEvents.on(
-  'failed',
-  ({ jobId, failedReason }) => {
-    console.error(`error generating thumbnails for job #${jobId}`, failedReason);
-  },
-);
+  const user = await dbClient.getUserById(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  console.log(`Welcome ${user.email}!`);
+})
+
+// Create a queue scheduler to manage job scheduling
+queue
+  .on('job enqueue', (id, type) => {
+    console.log(`Job ${id} got queued of type ${type}`);
+  })
+  .on('job complete', (id, result) => {
+    kue.Job.get(id, (err, job) => {
+      if (err) return;
+      job.remove((err) => {
+        if (err) throw err;
+        console.log('removed completed job #%d', job.id);
+      });
+    });
+  });
