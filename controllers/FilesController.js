@@ -4,9 +4,9 @@ import path from 'path';
 import { v4 as uuid4 } from 'uuid';
 
 import dbClient from '../utils/db';
-import fileQueue from '../worker';
-// import queue from '../jobber';
 import redisClient from '../utils/redis';
+import queue from '../worker';
+// import fileQueue from '../jobber';
 
 const folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
 
@@ -185,15 +185,14 @@ export const postUpload = async (req, res) => {
   dbClient.createFile(file)
     .then((newFile) => {
       if (newFile.type === 'image') {
-        // COMMENTED OUT KUE JOB SYNTAX
-        // const job = queue.create('fileQueue', {
-        fileQueue.add('image', {
+        // fileQueue.add('image', { // BULLMQ SYNTAX 
+        const job = queue.create('fileQueue', {
           userId,
           fileId: newFile._id,
+        })
+        .save((err) => {
+          if (!err) console.log( job.id );
         });
-        // .save((err) => {
-        // if (!err) console.log( job.id );
-        // });
         console.log('image added to queue');
       }
 
