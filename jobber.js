@@ -1,13 +1,14 @@
 import fs from 'fs';
-import kue from 'kue';
 import imageThumbnail from 'image-thumbnail';
+import { Queue, QueueEvents, Worker } from 'bullmq';
 
 import dbClient from './utils/db';
 
-const queue = kue.createQueue();
-export default queue;
+export const fileQueue = new Queue('fileQueue');
+export const userQueue = new Queue('userQueue');
 
-queue.process('fileQueue', async (job, done) => {
+// Add job processor for fileQueue
+const fileWorker = new Worker('fileQueue', async (job) => {
   const { fileId, userId } = job.data;
 
   if (!fileId) {
@@ -45,20 +46,44 @@ queue.process('fileQueue', async (job, done) => {
         });
     }));
   }
-  done();
 });
 
-// Create a queue scheduler to manage job scheduling
-queue
-  .on('job enqueue', (id, type) => {
-    console.log(`Job ${id} got queued of type ${type}`);
-  })
-  .on('job complete', (id, result) => {
-    kue.Job.get(id, (err, job) => {
-      if (err) return;
-      job.remove((err) => {
-        if (err) throw err;
-        console.log('removed completed job #%d', job.id);
-      });
-    });
+// Add job processor for userQueue
+const userWorker = new Worker('userQueue', async (job) => {
+  const { userId } = job.data;
+  if (!userId) {
+    throw new Error('Missing userId');
+  }
+
+  const user = await dbClient.getUserById(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  console.log(`Welcome ${user.email}!`);
+});
+
+// Create QueueSchedulers to manage job scheduling
+const queueEvents = new QueueEvents('fileQueue');
+
+queueEvents.on('completed', ({ jobId }) => {
+  console.log(`done generating thumbnails for job #${jobId}`);
+});
+
+queueEvents.on(
+  'failed',
+  ({ jobId, failedReason }) => {
+    console.error(`error generating thumbnails for job #${jobId}`, failedReason);
+  },);
+
+const uqueueEvents = new QueueEvents('userQueue');
+
+uqueueEvents.on('completed', ({ jobId }) => {
+  console.log(`done sending email for job #${jobId}`);
+});
+
+uqueueEvents.on(
+  'failed',
+  ({ jobId, failedReason }) => {
+    console.error(`error sending email for job #${jobId}`, failedReason);
   });
