@@ -1,7 +1,11 @@
 import crypto from 'crypto';
+
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
+import queue from '../worker';
+// import userQueue from '../jobber';
 
+// POST /users
 export const postNew = async (req, res) => {
   const { email, password } = req.body;
 
@@ -19,11 +23,31 @@ export const postNew = async (req, res) => {
   }
 
   const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
-  const newUser = await dbClient.createUser({ email, password: hashedPassword });
+  dbClient.createUser({
+      email,
+      password: hashedPassword,
+  })
+  .then((newUser) => {
+    const { _id: userId } = newUser;
+    console.log(userId);
 
-  res.status(201).json({ id: newUser._id, email: newUser.email });
+    // Add a job to the queue
+    // userQueue.add('user', { userId }); // BULLMQ SYNTAX
+    const job = queue.create('userQueue', { userId })
+      .save((err) => {
+        if (!err) console.log(job.id);
+      });
+    console.log('user added to queue');
+
+    res.status(201).json({ id: newUser._id, email: newUser.email });
+  })
+  .catch((err) => {
+    console.error(err);
+    res.status(500).json({ error: 'Error inserting user in DB' });
+  });
 };
 
+// /GET /users/me
 export const getMe = async (req, res) => {
   const token = req.headers['x-token'];
 
