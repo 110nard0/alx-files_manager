@@ -4,10 +4,13 @@ import path from 'path';
 import { v4 as uuid4 } from 'uuid';
 
 import dbClient from '../utils/db';
+import fileQueue from '../worker';
+// import queue from '../jobber';
 import redisClient from '../utils/redis';
 
 const folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
 
+// GET /files
 export const getIndex = async (req, res) => {
   const token = req.headers['x-token'];
   if (!token) {
@@ -32,6 +35,7 @@ export const getIndex = async (req, res) => {
   return res.json(files);
 };
 
+// GET /files/:id/data
 export const getFile = async (req, res) => {
   const token = req.headers['x-token'];
   if (!token) {
@@ -51,6 +55,7 @@ export const getFile = async (req, res) => {
   }
 
   const { id } = req.params;
+  const { size } = req.query;
   const file = await dbClient.getFileById(id);
 
   if (!file) {
@@ -63,16 +68,28 @@ export const getFile = async (req, res) => {
     return res.status(400).json({ error: "A folder doesn't have content" });
   }
 
-  if (!fs.existsSync(file.localPath)) {
+  let filePath = file.localPath;
+  if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: 'Not found' });
   }
 
+  if (file.type === 'image' && size) {
+    const sizePath = `${filePath}_${size}`;
+
+    if (fs.existsSync(sizePath)) {
+      filePath = sizePath;
+    } else {
+      return res.status(404).json({ error: 'Not found' });
+    }
+  }
+
   const mimeType = mime.contentType(file.name);
-
   res.setHeader('Content-Type', mimeType);
-  fs.createReadStream(file.localPath).pipe(res);
-}
+  res.sendFile(filePath);
+  // fs.createReadStream(filePath).pipe(res);
+};
 
+// GET /files/:id
 export const getShow = async (req, res) => {
   const token = req.headers['x-token'];
   if (!token) {
@@ -101,6 +118,7 @@ export const getShow = async (req, res) => {
   return res.json(file);
 };
 
+// POST /files
 export const postUpload = async (req, res) => {
   const token = req.headers['x-token'];
   if (!token) {
@@ -165,10 +183,29 @@ export const postUpload = async (req, res) => {
   }
 
   dbClient.createFile(file)
-    .then((newFile) => res.status(201).json(newFile))
-    .catch(() => res.status(500).json({ error: 'Error inserting file in DB' }));
+    .then((newFile) => {
+      if (newFile.type === 'image') {
+        // COMMENTED OUT KUE JOB SYNTAX
+        // const job = queue.create('fileQueue', {
+        fileQueue.add('image', {
+          userId,
+          fileId: newFile._id,
+        });
+        // .save((err) => {
+        // if (!err) console.log( job.id );
+        // });
+        console.log('image added to queue');
+      }
+
+      res.status(201).json(newFile);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json({ error: 'Error inserting file in DB' });
+    });
 };
 
+// PUT /files/:id/publish
 export const putPublish = async (req, res) => {
   const token = req.headers['x-token'];
   if (!token) {
@@ -199,6 +236,7 @@ export const putPublish = async (req, res) => {
     .catch(() => res.status(500).json({ error: 'Error updating file in DB' }));
 };
 
+// PUT /files/:id/unpublish
 export const putUnpublish = async (req, res) => {
   const token = req.headers['x-token'];
   if (!token) {
