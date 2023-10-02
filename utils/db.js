@@ -3,7 +3,7 @@ import { MongoClient, ObjectId } from 'mongodb';
 class DBClient {
   constructor() {
     const host = process.env.DB_HOST || 'localhost';
-    const port = process.env.DB_PORT || 27017;
+    const port = parseInt(process.env.DB_PORT) || 27017;
     const database = process.env.DB_DATABASE || 'files_manager';
 
     this.client = MongoClient(`mongodb://${host}:${port}`, { useUnifiedTopology: true });
