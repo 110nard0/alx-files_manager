@@ -1,11 +1,11 @@
-import express from 'express';
+import { Router } from 'express';
 
 import AppController from '../controllers/AppController';
 import * as AuthController from '../controllers/AuthController';
 import * as FilesController from '../controllers/FilesController';
 import * as UsersController from '../controllers/UsersController';
 
-const router = express.Router();
+const router = Router();
 
 router.get('/status', AppController.getStatus);
 router.get('/stats', AppController.getStats);
