@@ -18,7 +18,6 @@ router.route('/files')
   .post(FilesController.postUpload);
 
 router.get('/files/:id', FilesController.getShow);
-
 router.get('/files/:id/data', FilesController.getFile);
 
 router.put('/files/:id/publish', FilesController.putPublish);
