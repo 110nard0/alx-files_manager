@@ -1,6 +1,6 @@
 import express from 'express';
 
-import * as AppController from '../controllers/AppController';
+import AppController from '../controllers/AppController';
 import * as AuthController from '../controllers/AuthController';
 import * as FilesController from '../controllers/FilesController';
 import * as UsersController from '../controllers/UsersController';
@@ -26,4 +26,5 @@ router.put('/files/:id/unpublish', FilesController.putUnpublish);
 router.get('/users/me', UsersController.getMe);
 router.post('/users', UsersController.postNew);
 
-export default router;
+// export default router;
+module.exports = router;
