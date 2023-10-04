@@ -1,5 +1,6 @@
 /* eslint-disable */
 import crypto from 'crypto';
+import sha1 from 'sha1';
 
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
@@ -23,7 +24,8 @@ export const postNew = async (req, res) => {
     return res.status(400).json({ error: 'Already exists' });
   }
 
-  const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
+  // const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
+  const hashedPassword = sha1(password);
   dbClient.createUser({
     email,
     password: hashedPassword,
