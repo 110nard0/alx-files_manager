@@ -35,11 +35,11 @@ export const postNew = async (req, res) => {
 
       // Add a job to the queue
       // userQueue.add('user', { userId }); // BULLMQ SYNTAX
-    //   const job = queue.create('userQueue', { userId })
+      // const job = queue.create('userQueue', { userId })
       //   .save((err) => {
-        //   if (!err) console.log(job.id);
-  //       });
-    //   console.log('user added to queue');
+      //     if (!err) console.log(job.id);
+      //   });
+      // console.log('user added to queue');
 
       res.status(201).json({ id: newUser._id, email: newUser.email });
     })
@@ -50,26 +50,26 @@ export const postNew = async (req, res) => {
 };
 
 // /GET /users/me
-// export const getMe = async (req, res) => {
-//  const token = req.headers['x-token'];
+export const getMe = async (req, res) => {
+  const token = req.headers['x-token'];
 
-//  if (!token) {
-   //  return res.status(401).json({ error: 'Unauthorized' });
-  // }
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-//   const key = `auth_${token}`;
-  // const userId = await redisClient.get(key);
+  const key = `auth_${token}`;
+  const userId = await redisClient.get(key);
 
-  // if (!userId) {
-    // return res.status(401).json({ error: 'Unauthorized' });
-  // }
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-//   const user = await dbClient.getUserById(userId);
+  const user = await dbClient.getUserById(userId);
 
-  // if (!user) {
-    // return res.status(401).json({ error: 'Unauthorized' });
-  // }
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-//   const { email, _id: id } = user;
-  // res.status(200).json({ id, email });
-// };
+  const { email, _id: id } = user;
+  res.status(200).json({ id, email });
+};
