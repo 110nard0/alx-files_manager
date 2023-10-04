@@ -1,6 +1,6 @@
 /* eslint-disable */
 import fs from 'fs';
-// import mime from 'mime-types';
+import mime from 'mime-types';
 import path from 'path';
 import { v4 as uuid4 } from 'uuid';
 
@@ -37,58 +37,58 @@ export const getIndex = async (req, res) => {
 };
 
 // GET /files/:id/data
-// export const getFile = async (req, res) => {
-//   const token = req.headers['x-token'];
-//   if (!token) {
-//     return res.status(401).json({ error: 'Unauthorized' });
-//   }
+export const getFile = async (req, res) => {
+  const token = req.headers['x-token'];
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-//   const key = `auth_${token}`;
-//   const userId = await redisClient.get(key);
+  const key = `auth_${token}`;
+  const userId = await redisClient.get(key);
 
-//   if (!userId) {
-//     return res.status(401).json({ error: 'Unauthorized' });
-//   }
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-//   const user = await dbClient.getUserById(userId);
-//   if (!user) {
-//     return res.status(401).json({ error: 'Unauthorized' });
-//   }
+  const user = await dbClient.getUserById(userId);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-//   const { id } = req.params;
-//   const { size } = req.query;
-//   const file = await dbClient.getFileById(id);
+  const { id } = req.params;
+  const { size } = req.query;
+  const file = await dbClient.getFileById(id);
 
-//   if (!file) {
-//     return res.status(404).json({ error: 'Not found' });
-//   }
-//   if (!file.isPublic && (!user || file.userId !== userId)) {
-//     return res.status(404).json({ error: 'Not found' });
-//   }
-//   if (file.type === 'folder') {
-//     return res.status(400).json({ error: "A folder doesn't have content" });
-//   }
+  if (!file) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  if (!file.isPublic && (!user || file.userId !== userId)) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  if (file.type === 'folder') {
+    return res.status(400).json({ error: "A folder doesn't have content" });
+  }
 
-//   let filePath = file.localPath;
-//   if (!fs.existsSync(filePath)) {
-//     return res.status(404).json({ error: 'Not found' });
-//   }
+  let filePath = file.localPath;
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Not found' });
+  }
 
-//   if (file.type === 'image' && size) {
-//     const sizePath = `${filePath}_${size}`;
+  // if (file.type === 'image' && size) {
+  //   const sizePath = `${filePath}_${size}`;
 
-//     if (fs.existsSync(sizePath)) {
-//       filePath = sizePath;
-//     } else {
-//       return res.status(404).json({ error: 'Not found' });
-//     }
-//   }
+  //   if (fs.existsSync(sizePath)) {
+  //     filePath = sizePath;
+  //   } else {
+  //     return res.status(404).json({ error: 'Not found' });
+  //   }
+  // }
 
-//   const mimeType = mime.contentType(file.name);
-//   res.setHeader('Content-Type', mimeType);
-//   res.sendFile(filePath);
-//   // fs.createReadStream(filePath).pipe(res);
-// };
+  const mimeType = mime.contentType(file.name);
+  res.setHeader('Content-Type', mimeType);
+  res.sendFile(filePath);
+  // fs.createReadStream(filePath).pipe(res);
+};
 
 // GET /files/:id
 export const getShow = async (req, res) => {
