@@ -1,5 +1,5 @@
-/* eslint-disable */
-import crypto from 'crypto';
+/* eslint-disable consistent-return */
+// import crypto from 'crypto';
 import sha1 from 'sha1';
 
 import dbClient from '../utils/db';
@@ -26,12 +26,13 @@ export const postNew = async (req, res) => {
 
   // const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
   const hashedPassword = sha1(password);
+
   dbClient.createUser({
     email,
     password: hashedPassword,
   })
     .then((newUser) => {
-      const { _id: userId } = newUser;
+      const { _id: userId, email } = newUser;
 
       // Add a job to the queue
       // userQueue.add('user', { userId }); // BULLMQ SYNTAX
@@ -41,7 +42,7 @@ export const postNew = async (req, res) => {
       //   });
       // console.log('user added to queue');
 
-      res.status(201).json({ id: newUser._id, email: newUser.email });
+      res.status(201).json({ id: userId, email });
     })
     .catch((err) => {
       console.error(err);

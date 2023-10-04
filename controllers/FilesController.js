@@ -1,4 +1,4 @@
-/* eslint-disable consistent-return */
+/* eslint-disable */
 import fs from 'fs';
 // import mime from 'mime-types';
 import path from 'path';
@@ -120,7 +120,7 @@ const folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
 // };
 
 // POST /files
-const postUpload = async (req, res) => {
+export const postUpload = async (req, res) => {
   const token = req.headers['x-token'];
   if (!token) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -204,8 +204,6 @@ const postUpload = async (req, res) => {
       res.status(500).json({ error: 'Error inserting file in DB' });
     });
 };
-
-export default postUpload;
 
 // PUT /files/:id/publish
 // export const putPublish = async (req, res) => {
