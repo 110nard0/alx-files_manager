@@ -12,29 +12,29 @@ import redisClient from '../utils/redis';
 const folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
 
 // GET /files
-// export const getIndex = async (req, res) => {
-//   const token = req.headers['x-token'];
-//   if (!token) {
-//     return res.status(401).json({ error: 'Unauthorized' });
-//   }
+export const getIndex = async (req, res) => {
+  const token = req.headers['x-token'];
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-//   const key = `auth_${token}`;
-//   const userId = await redisClient.get(key);
+  const key = `auth_${token}`;
+  const userId = await redisClient.get(key);
 
-//   if (!userId) {
-//     return res.status(401).json({ error: 'Unauthorized' });
-//   }
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-//   const user = await dbClient.getUserById(userId);
-//   if (!user) {
-//     return res.status(401).json({ error: 'Unauthorized' });
-//   }
+  const user = await dbClient.getUserById(userId);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-//   const { parentId, page } = req.query;
-//   const files = await dbClient.getFiles(parentId, page);
+  const { parentId, page } = req.query;
+  const files = await dbClient.getFiles(parentId, page);
 
-//   return res.json(files);
-// };
+  return res.json(files);
+};
 
 // GET /files/:id/data
 // export const getFile = async (req, res) => {
@@ -91,33 +91,33 @@ const folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
 // };
 
 // GET /files/:id
-// export const getShow = async (req, res) => {
-//   const token = req.headers['x-token'];
-//   if (!token) {
-//     return res.status(401).json({ error: 'Unauthorized' });
-//   }
+export const getShow = async (req, res) => {
+  const token = req.headers['x-token'];
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-//   const key = `auth_${token}`;
-//   const userId = await redisClient.get(key);
+  const key = `auth_${token}`;
+  const userId = await redisClient.get(key);
 
-//   if (!userId) {
-//     return res.status(401).json({ error: 'Unauthorized' });
-//   }
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-//   const user = await dbClient.getUserById(userId);
-//   if (!user) {
-//     return res.status(401).json({ error: 'Unauthorized' });
-//   }
+  const user = await dbClient.getUserById(userId);
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-//   const { id } = req.params;
-//   const file = await dbClient.getFileById(id);
+  const { id } = req.params;
+  const file = await dbClient.getFileById(id);
 
-//   if (!file) {
-//     return res.status(404).json({ error: 'Not found' });
-//   }
+  if (!file) {
+    return res.status(404).json({ error: 'Not found' });
+  }
 
-//   return res.json(file);
-// };
+  return res.json(file);
+};
 
 // POST /files
 export const postUpload = async (req, res) => {
