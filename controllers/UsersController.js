@@ -1,5 +1,4 @@
 /* eslint-disable consistent-return */
-// import crypto from 'crypto';
 import sha1 from 'sha1';
 
 import dbClient from '../utils/db';
@@ -24,7 +23,6 @@ export const postNew = async (req, res) => {
     return res.status(400).json({ error: 'Already exists' });
   }
 
-  // const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
   const hashedPassword = sha1(password);
 
   dbClient.createUser({
