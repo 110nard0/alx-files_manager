@@ -1,4 +1,3 @@
-// main.js
 import dbClient from './utils/db';
 
 const waitConnection = () => {
@@ -8,18 +7,18 @@ const waitConnection = () => {
             await setTimeout(() => {
                 i += 1;
                 if (i >= 10) {
-                    reject();
+                    reject()
                 }
                 else if(!dbClient.isAlive()) {
-                    repeatFct();
+                    repeatFct()
                 }
                 else {
-                    resolve();
+                    resolve()
                 }
             }, 1000);
         };
         repeatFct();
-    });
+    })
 };
 
 (async () => {

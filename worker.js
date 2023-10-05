@@ -1,79 +1,64 @@
-import fs from 'fs';
-import kue from 'kue';
+import Queue from 'bull';
 import imageThumbnail from 'image-thumbnail';
-
+import { promises as fs } from 'fs';
+import { ObjectID } from 'mongodb';
 import dbClient from './utils/db';
 
-const queue = kue.createQueue();
-export default queue;
+const fileQueue = new Queue('fileQueue', 'redis://127.0.0.1:6379');
+const userQueue = new Queue('userQueue', 'redis://127.0.0.1:6379');
 
-queue.process('fileQueue', async (job, done) => {
-  const { fileId, userId } = job.data;
+async function thumbNail(width, localPath) {
+  const thumbnail = await imageThumbnail(localPath, { width });
+  return thumbnail;
+}
 
+fileQueue.process(async (job, done) => {
+  console.log('Processing...');
+  const { fileId } = job.data;
   if (!fileId) {
-    throw new Error('Missing fileId');
+    done(new Error('Missing fileId'));
   }
+
+  const { userId } = job.data;
   if (!userId) {
-    throw new Error('Missing userId');
+    done(new Error('Missing userId'));
   }
 
-  const file = await dbClient.getFileById(fileId);
-  if (!file || file.userId !== userId) {
-    throw new Error('File not found in DB');
-  }
+  console.log(fileId, userId);
+  const files = dbClient.db.collection('files');
+  const idObject = new ObjectID(fileId);
+  files.findOne({ _id: idObject }, async (err, file) => {
+    if (!file) {
+      console.log('Not found');
+      done(new Error('File not found'));
+    } else {
+      const fileName = file.localPath;
+      const thumbnail500 = await thumbNail(500, fileName);
+      const thumbnail250 = await thumbNail(250, fileName);
+      const thumbnail100 = await thumbNail(100, fileName);
 
-  const filePath = file.localPath;
-  if (!fs.existsSync(filePath)) {
-    throw new Error('File not found in local storage');
-  }
+      console.log('Writing files to system');
+      const image500 = `${file.localPath}_500`;
+      const image250 = `${file.localPath}_250`;
+      const image100 = `${file.localPath}_100`;
 
-  // Check if the file is an image
-  if (file.type === 'image') {
-    const sizes = [500, 250, 100];
-
-    // Generate thumbnails
-    await Promise.all(sizes.map(async (size) => {
-      const thumbnailPath = `${filePath}_${size}`;
-      const options = { width: size, responseType: 'base64' };
-      const thumbnailData = await imageThumbnail(filePath, options);
-
-      // Save thumbnails to disk
-      await fs.writeFile(thumbnailPath, Buffer.from(thumbnailData, 'base64'),
-        (err) => {
-          if (err) throw err;
-          console.log('The file has been saved!');
-        });
-    }));
-  }
-  done();
+      await fs.writeFile(image500, thumbnail500);
+      await fs.writeFile(image250, thumbnail250);
+      await fs.writeFile(image100, thumbnail100);
+      done();
+    }
+  });
 });
 
-queue.process('userQueue', async (job, done) => {
+userQueue.process(async (job, done) => {
   const { userId } = job.data;
-
-  if (!userId) {
-    throw new Error('Missing userId');
+  if (!userId) done(new Error('Missing userId'));
+  const users = dbClient.db.collection('users');
+  const idObject = new ObjectID(userId);
+  const user = await users.findOne({ _id: idObject });
+  if (user) {
+    console.log(`Welcome ${user.email}!`);
+  } else {
+    done(new Error('User not found'));
   }
-
-  const user = await dbClient.getUserById(userId);
-  if (!user) {
-    throw new Error('User not found');
-  }
-
-  console.log(`Welcome ${user.email}!`);
-})
-
-// Create a queue scheduler to manage job scheduling
-queue
-  .on('job enqueue', (id, type) => {
-    console.log(`Job ${id} got queued of type ${type}`);
-  })
-  .on('job complete', (id, result) => {
-    kue.Job.get(id, (err, job) => {
-      if (err) return;
-      job.remove((err) => {
-        if (err) throw err;
-        console.log('removed completed job #%d', job.id);
-      });
-    });
-  });
+});

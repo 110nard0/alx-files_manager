@@ -1,40 +1,44 @@
+import { createClient } from 'redis';
 import { promisify } from 'util';
-import redis from 'redis';
 
+// class to define methods for commonly used redis commands
 class RedisClient {
   constructor() {
-    this.client = redis.createClient();
-
-    this.client.on('connect', () => {
-      console.log('Redis server connected');
+    this.client = createClient();
+    this.client.on('error', (error) => {
+      console.log(`Redis client not connected to server: ${error}`);
     });
-
-    this.client.on('error', (err) => {
-      console.error('Redis connection error:', err);
-    });
-
-    this.getAsync = promisify(this.client.get).bind(this.client);
-    this.setAsync = promisify(this.client.set).bind(this.client);
-    this.delAsync = promisify(this.client.del).bind(this.client);
   }
 
+  // check connection status and report
   isAlive() {
-    return this.client.connected;
+    if (this.client.connected) {
+      return true;
+    }
+    return false;
   }
 
+  // get value for given key from redis server
   async get(key) {
-    const value = await this.getAsync(key);
+    const redisGet = promisify(this.client.get).bind(this.client);
+    const value = await redisGet(key);
     return value;
   }
 
-  async set(key, value, duration) {
-    await this.setAsync(key, value, 'EX', duration);
+  // set key value pair to redis server
+  async set(key, value, time) {
+    const redisSet = promisify(this.client.set).bind(this.client);
+    await redisSet(key, value);
+    await this.client.expire(key, time);
   }
 
+  // del key vale pair from redis server
   async del(key) {
-    await this.delAsync(key);
+    const redisDel = promisify(this.client.del).bind(this.client);
+    await redisDel(key);
   }
 }
 
 const redisClient = new RedisClient();
-export default redisClient;
+
+module.exports = redisClient;
