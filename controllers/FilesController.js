@@ -6,7 +6,7 @@ import { v4 as uuid4 } from 'uuid';
 
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
-// import queue from '../worker';
+import queue from '../worker';
 // import fileQueue from '../jobber';
 
 const folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
@@ -74,15 +74,15 @@ export const getFile = async (req, res) => {
     return res.status(404).json({ error: 'Not found' });
   }
 
-  // if (file.type === 'image' && size) {
-  //   const sizePath = `${filePath}_${size}`;
+  if (file.type === 'image' && size) {
+    const sizePath = `${filePath}_${size}`;
 
-  //   if (fs.existsSync(sizePath)) {
-  //     filePath = sizePath;
-  //   } else {
-  //     return res.status(404).json({ error: 'Not found' });
-  //   }
-  // }
+    if (fs.existsSync(sizePath)) {
+      filePath = sizePath;
+    } else {
+      return res.status(404).json({ error: 'Not found' });
+    }
+  }
 
   const mimeType = mime.contentType(file.name);
   res.setHeader('Content-Type', mimeType);
@@ -185,17 +185,17 @@ export const postUpload = async (req, res) => {
 
   dbClient.createFile(file)
     .then((newFile) => {
-      // if (newFile.type === 'image') {
-      //   fileQueue.add('image', { // BULLMQ SYNTAX
-      //   const job = queue.create('fileQueue', {
-      //     userId,
-      //     fileId: newFile._id,
-      //   })
-      //     .save((err) => {
-      //       if (!err) console.log(job.id);
-      //     });
-      //   console.log('image added to queue');
-      // }
+      if (newFile.type === 'image') {
+        // fileQueue.add('image', { // BULLMQ SYNTAX
+        const job = queue.create('fileQueue', {
+          userId,
+          fileId: newFile._id,
+        })
+          .save((err) => {
+            if (!err) console.log(job.id);
+          });
+        console.log('image added to queue');
+      }
 
       res.status(201).json(newFile);
     })
