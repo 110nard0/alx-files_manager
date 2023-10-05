@@ -4,7 +4,7 @@ import sha1 from 'sha1';
 
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
-// import queue from '../worker';
+import queue from '../worker';
 // import userQueue from '../jobber';
 
 // POST /users
@@ -36,11 +36,11 @@ export const postNew = async (req, res) => {
 
       // Add a job to the queue
       // userQueue.add('user', { userId }); // BULLMQ SYNTAX
-      // const job = queue.create('userQueue', { userId })
-      //   .save((err) => {
-      //     if (!err) console.log(job.id);
-      //   });
-      // console.log('user added to queue');
+      const job = queue.create('userQueue', { userId })
+        .save((err) => {
+          if (!err) console.log(job.id);
+        });
+      console.log('user added to queue');
 
       res.status(201).json({ id: userId, email });
     })
